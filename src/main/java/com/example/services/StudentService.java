@@ -52,17 +52,13 @@ public class StudentService {
 
 
 
-    public Optional<Student> getStudnetById(long studentId){
+    public Optional<Student> getStudentById(long studentId){
         return studentRepository.findById(studentId);
     }
 
 
     public Student getStudentWithHighestAmount() {
         List<Student> students = studentRepository.findStudentsByHighestAmount();
-        if (!students.isEmpty()) {
-            return students.get(0); // First student has the highest amount
-        } else {
-            return null;
-        }
+        return (Student) students;
     }
     }

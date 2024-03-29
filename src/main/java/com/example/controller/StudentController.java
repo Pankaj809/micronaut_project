@@ -5,7 +5,7 @@ import com.example.services.StudentService;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 
-import java.net.URI;
+import java.util.Optional;
 
 @Controller("/students")
 public class StudentController {
@@ -36,4 +36,9 @@ public class StudentController {
         }
     }
 
+
+        @Get("/find/{id}")
+        public Optional<Student> getStudentById(long id){
+        return studentService.getStudentById(id);
+        }
 }
