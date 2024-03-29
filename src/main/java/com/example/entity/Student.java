@@ -12,7 +12,7 @@ import java.util.Set;
 
 @Getter
 @Setter
-@MappedEntity
+//@MappedEntity
 @Entity
 @Table(name = "student")
 @SerdeImport
@@ -25,8 +25,6 @@ public class Student {
     private Long sid;
 
     private String sName;
-
-
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
     @JoinTable(name = "student_course",
             joinColumns = @JoinColumn(name = "student_id"),

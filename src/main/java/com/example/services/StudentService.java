@@ -40,7 +40,6 @@ public class StudentService {
         Student studentOptional = studentRepository.findById(studentId).orElseThrow(()->new RuntimeException("not found"));
 
 
-
         if (courseOptional.isPresent()) {
             Course course = courseOptional.get();
             studentOptional.getCourses().add(course);
