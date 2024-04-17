@@ -1,49 +1,57 @@
 package com.example.service;
 
+import com.example.entity.ProductEntity;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.example.entity.Product;
+import io.micronaut.core.annotation.NonNull;
+
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ProductService {
     private final CqlSession cqlSession;
     private final PreparedStatement createStatement;
     private final String CREATE_QUERY = "INSERT INTO pankaj.products(id, name, price, company) VALUES (?, ?, ?, ?)";
-    private final PreparedStatement findById;
-    private final PreparedStatement findAllProducts;
-    private final PreparedStatement deleteProduct;
 
-    private final PreparedStatement updateProduct;
+    private final PreparedStatement findStatement;
+    private final String FIND_BY_ID = "SELECT * FROM pankaj.products WHERE id = ? AND name = ?";
+
+    private final PreparedStatement findAllStatement;
+    private final String FIND_ALL_PRODUCTS = "SELECT * FROM pankaj.products";
+
+    private final PreparedStatement deleteStatement;
+    private final String DELETE_QUERY = "DELETE FROM pankaj.products WHERE id = ? AND name = ?";
+
+    private final PreparedStatement updateStatement;
+    private final String UPDATE_QUERY = "UPDATE pankaj.products SET price = ?, company = ? WHERE id = ? AND name = ?";
 
     public ProductService(CqlSession cqlSession) {
         this.cqlSession = cqlSession;
         this.createStatement = cqlSession.prepare(CREATE_QUERY);
-        this.findById = cqlSession.prepare("SELECT * FROM pankaj.products WHERE id = ? AND name = ?");
-        this.findAllProducts = cqlSession.prepare("SELECT * FROM pankaj.products");
-        this.deleteProduct = cqlSession.prepare("DELETE FROM pankaj.products WHERE id = ? AND name = ?");
-        this.updateProduct = cqlSession.prepare("UPDATE pankaj.products SET price = ?, company = ? WHERE id = ? AND name = ?");
+        this.findStatement = cqlSession.prepare(FIND_BY_ID);
+        this.findAllStatement = cqlSession.prepare(FIND_ALL_PRODUCTS);
+        this.deleteStatement = cqlSession.prepare(DELETE_QUERY);
+        this.updateStatement = cqlSession.prepare(UPDATE_QUERY);
     }
 
-    public Product createProduct(Product product) {
+    public ProductEntity createProduct(ProductEntity product) {
         cqlSession.execute(
                 createStatement.bind(product.getId(), product.getName(), product.getPrice(), product.getCompany())
         );
         return product;
     }
 
-    public Optional<Product> findById(int id, String name) {
-        ResultSet resultSet = cqlSession.execute(findById.bind(id, name));
+    public Optional<ProductEntity> findById(int id, String name) {
+        ResultSet resultSet = cqlSession.execute(findStatement.bind(id, name));
         Row row = resultSet.one();
         if (row != null) {
-            Product product = new Product();
+            ProductEntity product = new ProductEntity();
             product.setId(row.getInt("id"));
             product.setName(row.getString("name"));
             product.setPrice(row.getString("price"));
@@ -53,11 +61,11 @@ public class ProductService {
         return Optional.empty();
     }
 
-    public List<Product> findProducts() {
-        List<Product> products = new ArrayList<>();
-        ResultSet resultSet = cqlSession.execute(findAllProducts.bind());
+    public List<ProductEntity> findProducts() {
+        List<ProductEntity> products = new ArrayList<>();
+        ResultSet resultSet = cqlSession.execute(findAllStatement.bind());
         for (Row row : resultSet) {
-            Product product = new Product();
+            ProductEntity product = new ProductEntity();
             product.setId(row.getInt("id"));
             product.setName(row.getString("name"));
             product.setPrice(row.getString("price"));
@@ -68,25 +76,21 @@ public class ProductService {
     }
 
     public void deleteProduct(int id, String name) {
-        cqlSession.execute(deleteProduct.bind(id, name));
+        cqlSession.execute(deleteStatement.bind(id, name));
     }
 
-    public Product updateProduct(int id, Product updatedProduct) {
-        Optional<Product> existingProduct = findById(id, updatedProduct.getName());
+    public ProductEntity updateProduct(@NonNull ProductEntity updatedProduct) {
+        Optional<ProductEntity> existingProduct = findById(updatedProduct.getId(), updatedProduct.getName());
 
-        if (existingProduct.isEmpty()) {
-            throw new IllegalArgumentException("Product not found for id " + id + " and name " + updatedProduct.getName());
+        if (existingProduct.isPresent()) {
+            ProductEntity existingProductDto = existingProduct.get();
+            cqlSession.execute(updateStatement.bind(updatedProduct.getPrice(), updatedProduct.getCompany(), existingProductDto.getId(), existingProductDto.getName()));
+            existingProductDto.setPrice(updatedProduct.getPrice());
+            existingProductDto.setCompany(updatedProduct.getCompany());
+            return existingProductDto;
+        } else {
+            throw new IllegalArgumentException("Product not found for id " + updatedProduct.getId() + " and name " +
+                    updatedProduct.getName());
         }
-
-        String existingProductName = existingProduct.get().getName();
-        existingProduct.get().setName(updatedProduct.getName());
-        existingProduct.get().setPrice(updatedProduct.getPrice());
-        existingProduct.get().setCompany(updatedProduct.getCompany());
-
-        cqlSession.execute(updateProduct.bind(updatedProduct.getPrice(), updatedProduct.getCompany(), id,
-                existingProductName));
-
-        return existingProduct.get();
     }
-
 }

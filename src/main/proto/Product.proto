@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.example.grpc";
+package com.example.grpc;
+
+message ProductDto {  // Renamed from Product to ProductDto
+  int32 id = 1;
+  string name = 2;
+  string price = 3;
+  string company = 4;
+}
+
+message ListOfProductRequest {
+  repeated ProductDto product = 1;
+}
+
+message FindProductRequest {
+  int32 id = 1;
+  string name = 2;
+}
+
+message FindAllProductsResponse {
+  repeated ProductDto products = 1;
+}
+
+message DeleteProductRequest {
+  int32 id = 1;
+  string name = 2;
+}
+
+message UpdateProductRequest {
+  int32 id = 1;
+  string name = 2;
+  string price = 3;
+  string company = 4;
+}
+
+service ProductService {
+  rpc createProduct(ProductDto) returns (ProductDto);
+  rpc findProduct(FindProductRequest) returns (ProductDto);
+  rpc findAllProducts(Empty) returns (ListOfProductRequest);
+  rpc deleteProduct(DeleteProductRequest) returns (Empty);
+  rpc updateProduct(UpdateProductRequest) returns (ProductDto);
+}
+
+message Empty {}
