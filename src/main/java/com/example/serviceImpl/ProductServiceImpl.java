@@ -1,8 +1,9 @@
-
 package com.example.serviceImpl;
 
 import com.example.entity.ProductEntity;
+import com.example.exception.ProductNotFoundException;
 import com.example.grpc.*;
+import com.example.mapper.ProductMapper;
 import com.example.service.ProductService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -24,10 +25,9 @@ public class ProductServiceImpl extends ProductServiceGrpc.ProductServiceImplBas
     }
 
     @Override
-
-    public void createProduct(com.example.grpc.ProductDto request, StreamObserver<com.example.grpc.ProductDto> responseObserver) {
-        ProductEntity createdProduct = productService.createProduct(ProductEntity.toModel(request));
-        responseObserver.onNext(ProductEntity.toGrpc(createdProduct));
+    public void createProduct(ProductDto request, StreamObserver<ProductDto> responseObserver) {
+        ProductEntity createdProduct = productService.createProduct(ProductMapper.toEntity(request));
+        responseObserver.onNext(ProductMapper.toDto(createdProduct));
         responseObserver.onCompleted();
     }
 
@@ -38,41 +38,37 @@ public class ProductServiceImpl extends ProductServiceGrpc.ProductServiceImplBas
         responseObserver.onCompleted();
     }
 
-
     @Override
     public void findAllProducts(Empty request, StreamObserver<ListOfProductRequest> responseObserver) {
         try {
             var products = productService.findProducts();
-
             logger.info("Found {} products", products.size());
-
-            var listOfProductRequest = products.stream().map(ProductEntity::toGrpc).toList();
-
+            var listOfProductRequest = products.stream().map(ProductMapper::toDto).toList();
             var rpcProductList = ListOfProductRequest.newBuilder()
                     .addAllProduct(listOfProductRequest)
                     .build();
-
             responseObserver.onNext(rpcProductList);
-
-        } catch (Exception e) {
+        } catch (ProductNotFoundException e) {
             responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asException());
         }
-
         responseObserver.onCompleted();
-
     }
 
-
     @Override
-    public void findProduct(FindProductRequest request, StreamObserver<com.example.grpc.ProductDto> responseObserver) {
+    public void findProduct(FindProductRequest request, StreamObserver<ProductDto> responseObserver) {
         Optional<ProductEntity> products = productService.findById(request.getId(), request.getName());
 
-        responseObserver.onNext(ProductEntity.toGrpc(products.get()));
+        if (products.isEmpty()) {
+            responseObserver.onError(Status.NOT_FOUND.withDescription("Product not found").asException());
+            return;
+        }
+
+        responseObserver.onNext(ProductMapper.toDto(products.get()));
         responseObserver.onCompleted();
     }
 
     @Override
-    public void updateProduct(UpdateProductRequest request, StreamObserver<com.example.grpc.ProductDto> responseObserver) {
+    public void updateProduct(UpdateProductRequest request, StreamObserver<ProductDto> responseObserver) {
         var productModel = ProductEntity.builder()
                 .id(request.getId())
                 .name(request.getName())
@@ -80,8 +76,7 @@ public class ProductServiceImpl extends ProductServiceGrpc.ProductServiceImplBas
                 .company(request.getCompany())
                 .build();
         var updatedProduct = productService.updateProduct(productModel);
-        responseObserver.onNext(ProductEntity.toGrpc(updatedProduct));
+        responseObserver.onNext(ProductMapper.toDto(updatedProduct));
         responseObserver.onCompleted();
     }
 }
-

@@ -4,7 +4,7 @@ option java_multiple_files = true;
 option java_package = "com.example.grpc";
 package com.example.grpc;
 
-message ProductDto {  // Renamed from Product to ProductDto
+message ProductDto {  // confusing process of message serialization and deserialization.
   int32 id = 1;
   string name = 2;
   string price = 3;
@@ -37,7 +37,7 @@ message UpdateProductRequest {
 }
 
 service ProductService {
-  rpc createProduct(ProductDto) returns (ProductDto);
+  rpc createProduct(ProductDto) returns (ProductDto);  //yaha return rakeko xa but impl ma void rakhda pani it is working
   rpc findProduct(FindProductRequest) returns (ProductDto);
   rpc findAllProducts(Empty) returns (ListOfProductRequest);
   rpc deleteProduct(DeleteProductRequest) returns (Empty);
