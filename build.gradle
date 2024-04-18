@@ -21,6 +21,8 @@ dependencies {
 //    implementation("io.micronaut.coherence:micronaut-coherence")
 //    implementation("io.micronaut.coherence:micronaut-coherence-grpc-client")
     //grpc
+
+
     implementation("io.micronaut.grpc:micronaut-grpc-runtime")
     implementation("javax.annotation:javax.annotation-api")
 

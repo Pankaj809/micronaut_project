@@ -29,6 +29,9 @@ public class ProductServiceImpl extends ProductServiceGrpc.ProductServiceImplBas
         ProductEntity createdProduct = productService.createProduct(ProductMapper.toEntity(request));
         responseObserver.onNext(ProductMapper.toDto(createdProduct));
         responseObserver.onCompleted();
+
+
+        //in order to return something, need to include onNext(). EXPLORE MORE
     }
 
     @Override
@@ -62,7 +65,6 @@ public class ProductServiceImpl extends ProductServiceGrpc.ProductServiceImplBas
             responseObserver.onError(Status.NOT_FOUND.withDescription("Product not found").asException());
             return;
         }
-
         responseObserver.onNext(ProductMapper.toDto(products.get()));
         responseObserver.onCompleted();
     }

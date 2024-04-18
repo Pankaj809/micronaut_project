@@ -4,6 +4,9 @@ option java_multiple_files = true;
 option java_package = "com.example.grpc";
 package com.example.grpc;
 
+
+//INTERCEPTOR, WEBSOCKET,
+//how are we using bidirectional streaming
 message ProductDto {  // confusing process of message serialization and deserialization.
   int32 id = 1;
   string name = 2;
